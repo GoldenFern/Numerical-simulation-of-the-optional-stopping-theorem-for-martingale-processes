@@ -25,8 +25,7 @@ def fig3_1_surplus_paths(seed=42):
     lam, mu, theta = 1.0, 1.0, 0.2
     c = lam * mu * (1 + theta)
     claim_dist = expon(scale=mu)
-    T = 50.0
-    u = 5.0
+    T, u = 50.0, 5.0
 
     fig, ax = new_figure()
     n_ruined = 0
@@ -35,30 +34,23 @@ def fig3_1_surplus_paths(seed=42):
         times, values = proc.simulate_path(T)
         ruined = values[-1] < 0
         if ruined:
-            color = COLOR_RED
-            alpha = 0.8
-            zorder = 5
+            color, alpha, zorder = COLOR_RED, 0.8, 5
             n_ruined += 1
         else:
-            color = COLOR_GRAY
-            alpha = 0.4
-            zorder = 1
-        ax.step(times, values, where='post', color=color, alpha=alpha,
-                lw=0.6, zorder=zorder)
+            color, alpha, zorder = COLOR_GRAY, 0.4, 1
+        ax.step(times, values, where='post', color=color, alpha=alpha, lw=0.6, zorder=zorder)
         if ruined:
-            ax.scatter(times[-1], values[-1], color=COLOR_RED, s=15, marker='x',
-                       zorder=6)
+            ax.scatter(times[-1], values[-1], color=COLOR_RED, s=15, marker='x', zorder=6)
 
-    ax.axhline(0, color=COLOR_RED, lw=0.6, ls='--', label='破产线 ($U=0$)')
-    ax.set_xlabel('时间 $t$')
-    ax.set_ylabel('盈余 $U_t$')
-    ax.set_title(f'Cramér-Lundberg 盈余过程轨迹 ($\\theta$={theta:.1f}, 破产: {n_ruined}/15)')
-    # 自定义 legend
+    ax.axhline(0, color=COLOR_RED, lw=0.6, ls='--')
+    ax.set_xlim(0, None)
+    ax.set_xlabel('time $t$')
+    ax.set_ylabel('surplus $U_t$')
+    ax.set_title(f'Cramer-Lundberg surplus ($\\theta$={theta:.1f}, ruined: {n_ruined}/15)')
     from matplotlib.lines import Line2D
     handles = [
-        Line2D([0], [0], color=COLOR_GRAY, lw=0.6, alpha=0.6, label='存活'),
-        Line2D([0], [0], color=COLOR_RED, lw=0.6, label='破产'),
-        Line2D([0], [0], color=COLOR_RED, lw=0.6, ls='--', label='$U=0$'),
+        Line2D([0], [0], color=COLOR_GRAY, lw=0.6, alpha=0.6, label='surviving'),
+        Line2D([0], [0], color=COLOR_RED, lw=0.6, label='ruined'),
     ]
     ax.legend(handles=handles, loc='upper right', frameon=False, fontsize=8)
     save_figure(fig, 'ch03_paths.pdf')
@@ -70,29 +62,29 @@ def fig3_2_ruin_prob():
     df = pd.read_csv(DATA_DIR / 'exp3_ruin_prob.csv')
 
     fig, ax = new_figure()
-    # Monte Carlo
-    ax.errorbar(df['u'], df['psi_mc'], yerr=1.96 * df['psi_se'],
+
+    # 仅对 psi_mc > 0 的点画 Monte Carlo（log 0 无效）
+    mask_mc = df['psi_mc'] > 0
+    ax.errorbar(df.loc[mask_mc, 'u'], df.loc[mask_mc, 'psi_mc'],
+                yerr=1.96 * df.loc[mask_mc, 'psi_se'],
                 fmt='o', color=COLOR_BLUE, capsize=2, markersize=3,
-                lw=0, label='Monte Carlo')
+                lw=0, label='Monte Carlo', alpha=0.7)
 
-    # Lundberg 上界
-    ax.plot(df['u'], df['psi_lundberg'], '--', color=COLOR_ORANGE, lw=1.0,
-            label='Lundberg 上界 $e^{-Ru}$')
-
-    # 精确解
+    ax.plot(df['u'], df['psi_lundberg'], '--', color=COLOR_ORANGE, lw=1.2,
+            label='Lundberg bound $e^{-Ru}$')
     ax.plot(df['u'], df['psi_exact'], '-', color=COLOR_RED, lw=1.0,
-            label='精确解 (指数索赔)')
+            label='exact (exp. claims)')
 
     ax.set_yscale('log')
-    ax.set_xlabel('初始资本 $u$')
-    ax.set_ylabel('破产概率 $\\psi(u)$')
-    ax.set_title('破产概率 vs 初始资本 (半对数)')
+    ax.set_xlabel('initial capital $u$')
+    ax.set_ylabel('ruin probability $\\psi(u)$')
+    ax.set_title('Ruin probability vs initial capital (semi-log)')
     ax.legend(loc='upper right', frameon=False, fontsize=8)
     save_figure(fig, 'ch03_ruin_prob.pdf')
 
 
 def fig3_3_martingale_dual(seed=123):
-    """图 3.3：双子图 —— 一条盈余轨迹 + 对应指数鞅。"""
+    """图 3.3：双子图 —— 盈余轨迹 + 指数鞅。"""
     set_style()
     np.random.seed(seed)
     lam, mu, theta = 1.0, 1.0, 0.2
@@ -100,25 +92,25 @@ def fig3_3_martingale_dual(seed=123):
     claim_dist = expon(scale=mu)
     mgf = exp_claim_mgf_factory('exponential', rate=1/mu)
     R = find_adjustment_R(lam, c, mgf)
-    u = 5.0
-    T = 100.0
+    u, T = 5.0, 100.0
 
     proc = SurplusProcess(u, c, lam, claim_dist)
     times, U_vals = proc.simulate_path(T)
     M_vals = np.exp(-R * U_vals)
 
     fig, (ax1, ax2) = new_figure_dual()
-
     ax1.step(times, U_vals, where='post', color=COLOR_BLUE, lw=0.6)
     ax1.axhline(0, color=COLOR_RED, lw=0.6, ls='--', alpha=0.5)
-    ax1.set_ylabel('盈余 $U_t$')
-    ax1.set_title('Cramér-Lundberg 盈余过程')
+    ax1.set_xlim(0, None)
+    ax1.set_ylabel('surplus $U_t$')
+    ax1.set_title('Cramer-Lundberg surplus process')
 
     ax2.step(times, M_vals, where='post', color=COLOR_GREEN, lw=0.6)
     ax2.axhline(1.0, color=COLOR_GRAY, lw=0.5, ls=':', alpha=0.5)
-    ax2.set_xlabel('时间 $t$')
+    ax2.set_xlim(0, None)
+    ax2.set_xlabel('time $t$')
     ax2.set_ylabel('$M_t = e^{-R U_t}$')
-    ax2.set_title(f'指数鞅 (调整系数 $R$={R:.4f})')
+    ax2.set_title(f'exponential martingale ($R$={R:.4f})')
 
     fig.tight_layout()
     save_figure(fig, 'ch03_martingale.pdf')

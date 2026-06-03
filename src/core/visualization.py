@@ -1,10 +1,15 @@
 """统一绘图工具"""
+import warnings
 import matplotlib
 matplotlib.use('Agg')  # 非交互后端，适合批量出图
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 from typing import Optional
+
+# 抑制字体相关警告（CJK 字体在 mathtext 中的已知限制）
+warnings.filterwarnings('ignore', message='.*does not have a glyph.*')
+warnings.filterwarnings('ignore', message='.*substituting with a dummy symbol.*')
 
 # 统一的 16:9 图片尺寸
 FIG_W, FIG_H = 6.4, 3.6  # inches, 16:9
@@ -22,10 +27,11 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 def set_style():
     """设置全局 matplotlib 样式。"""
+    # 必须在其他设置之前关闭 unicode 负号
+    plt.rcParams['axes.unicode_minus'] = False
     plt.rcParams.update({
         'font.family': 'sans-serif',
         'font.sans-serif': ['SimHei', 'Microsoft YaHei', 'DejaVu Sans'],
-        'axes.unicode_minus': False,  # 避免负号显示为方块
         'font.size': 9,
         'axes.titlesize': 10,
         'axes.labelsize': 9,

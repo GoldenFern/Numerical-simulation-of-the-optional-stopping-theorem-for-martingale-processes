@@ -16,17 +16,14 @@ DATA_DIR = PROJECT_ROOT / 'output' / 'data'
 
 
 def run_R_experiment(lam=1.0, mu=1.0, theta_values=(0.1, 0.2, 0.5)):
-    """计算不同安全负荷下的调整系数 R。"""
     claim_dist = expon(scale=mu)
     mgf = exp_claim_mgf_factory('exponential', rate=1/mu)
-
     rows = []
     for theta in theta_values:
-        expected_claim = lam * mu  # λ E[Y]
-        c = expected_claim * (1 + theta)  # 安全负荷
+        expected_claim = lam * mu
+        c = expected_claim * (1 + theta)
         R = find_adjustment_R(lam, c, mgf)
         rows.append({'theta': theta, 'c': c, 'R': R, 'lam': lam, 'mu': mu})
-
     df = pd.DataFrame(rows)
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     df.to_csv(DATA_DIR / 'exp3_R.csv', index=False)
@@ -35,11 +32,10 @@ def run_R_experiment(lam=1.0, mu=1.0, theta_values=(0.1, 0.2, 0.5)):
 
 def run_ruin_prob_experiment(lam=1.0, mu=1.0, theta=0.2,
                               u_values=np.arange(0, 21),
-                              n_paths=10000, T=100.0, seed=42):
-    """Monte Carlo 估计不同初始资本下的破产概率。"""
+                              n_paths=50000, T=100.0, seed=42):
+    """增加路径数以降低 MC 噪声，特别是在大 u 处。"""
     expected_claim = lam * mu
     c = expected_claim * (1 + theta)
-
     claim_dist = expon(scale=mu)
     mgf = exp_claim_mgf_factory('exponential', rate=1/mu)
     R = find_adjustment_R(lam, c, mgf)
@@ -68,32 +64,18 @@ def run_ruin_prob_experiment(lam=1.0, mu=1.0, theta=0.2,
     return df
 
 
-def run_example_traj(u=5.0, lam=1.0, mu=1.0, theta=0.2,
-                     n_paths=15, T=50.0, seed=42):
-    """生成盈余轨迹样本（用于图 3.1 和 3.3）。"""
-    c = lam * mu * (1 + theta)
-    claim_dist = expon(scale=mu)
-    rng = np.random.default_rng(seed)
-    trajectories = []
-    for i in range(n_paths):
-        proc = SurplusProcess(u, c, lam, claim_dist)
-        times, values = proc.simulate_path(T)
-        ruined = values[-1] < 0
-        trajectories.append((times, values, ruined))
-    return trajectories
-
-
 if __name__ == '__main__':
     print("=== 第三章实验：保险破产模型 ===")
     print("实验1: 调整系数 R ...")
     df_R = run_R_experiment()
     for _, row in df_R.iterrows():
-        print(f"  θ={row['theta']:.1f}, c={row['c']:.2f}, R={row['R']:.6f}")
+        print(f"  theta={row['theta']:.1f}, c={row['c']:.2f}, R={row['R']:.6f}")
 
-    print("实验2: 破产概率 vs 初始资本 (theta=0.2, 20000 paths per u) ...")
+    print("实验2: 破产概率 vs 初始资本 (theta=0.2, 50000 paths)...")
     df = run_ruin_prob_experiment()
-    for _, row in df[df['u'] % 5 == 0].iterrows():
-        print(f"  u={row['u']:.0f}, ψ_MC={row['psi_mc']:.4f}±{1.96*row['psi_se']:.4f}, "
-              f"ψ_exact={row['psi_exact']:.4f}, Lundberg={row['psi_lundberg']:.4f}")
+    for u_check in [0, 5, 10, 15, 20]:
+        row = df[df['u'] == u_check].iloc[0]
+        print(f"  u={u_check:2d}, psi_MC={row['psi_mc']:.4f} +/- {1.96*row['psi_se']:.4f}, "
+              f"psi_exact={row['psi_exact']:.4f}")
     print(f"  保存到 output/data/exp3_ruin_prob.csv")
     print("第三章实验完成。")

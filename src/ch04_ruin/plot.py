@@ -23,8 +23,8 @@ def fig4_1_convergence():
 
     fig, ax = new_figure()
     for stype, color, label, y_theory in [
-        ('two_sided', COLOR_BLUE, '双边障碍 $\\tau = \\inf\\{n: S_n=-a \\text{ 或 } S_n=b\\}$', 0),
-        ('one_sided', COLOR_RED, '单边障碍 $\\tau = \\inf\\{n: S_n=b\\}$', 10.0),
+        ('two_sided', COLOR_BLUE, 'two-sided $\\tau = \\inf\\{n: S_n=-a \\;\\text{or}\\; S_n=b\\}$', 0),
+        ('one_sided', COLOR_RED, 'one-sided $\\tau = \\inf\\{n: S_n=b\\}$', 10.0),
     ]:
         sub = df[df['stop_type'] == stype]
         ax.errorbar(sub['n_paths'], sub['mean'], yerr=1.96 * sub['se'],
