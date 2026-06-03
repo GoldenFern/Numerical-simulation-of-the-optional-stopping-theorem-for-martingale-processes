@@ -16,11 +16,16 @@ COLOR_GREEN = '#1B7837'
 COLOR_GRAY = '#737373'
 COLOR_ORANGE = '#D95F02'
 
+# 项目根目录（用于 output 路径）
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
 
 def set_style():
     """设置全局 matplotlib 样式。"""
     plt.rcParams.update({
-        'font.family': 'serif',
+        'font.family': 'sans-serif',
+        'font.sans-serif': ['SimHei', 'Microsoft YaHei', 'DejaVu Sans'],
+        'axes.unicode_minus': False,  # 避免负号显示为方块
         'font.size': 9,
         'axes.titlesize': 10,
         'axes.labelsize': 9,
@@ -37,7 +42,7 @@ def set_style():
 
 
 def ensure_output_dir():
-    Path('output/figures').mkdir(parents=True, exist_ok=True)
+    (_PROJECT_ROOT / 'output' / 'figures').mkdir(parents=True, exist_ok=True)
 
 
 def new_figure() -> tuple[plt.Figure, plt.Axes]:
@@ -55,7 +60,7 @@ def new_figure_dual() -> tuple[plt.Figure, tuple[plt.Axes, plt.Axes]]:
 def save_figure(fig: plt.Figure, filename: str):
     """保存图片到 output/figures/。"""
     ensure_output_dir()
-    path = Path('output/figures') / filename
+    path = _PROJECT_ROOT / 'output' / 'figures' / filename
     fig.savefig(path, format='pdf', bbox_inches='tight')
     plt.close(fig)
 
