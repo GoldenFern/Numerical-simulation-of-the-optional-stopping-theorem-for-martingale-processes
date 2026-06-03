@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.env
+venv/
+.venv/
+*.tmp
+
+# LaTeX
+*.aux
+*.bbl
+*.blg
+*.brf
+*.fdb_latexmk
+*.fls
+*.glg-abr
+*.glo-abr
+*.gls-abr
+*.glg
+*.glo
+*.gls
+*.idx
+*.ilg
+*.ind
+*.ist
+*.lof
+*.log
+*.lot
+*.maf
+*.mtc*
+*.out
+*.run.xml
+*.synctex
+*.synctex.gz
+*.thm
+*.toc
+*.xdv
+*.bcf
+*.nav
+*.snm
+*.vrb
+*.acn
+*.acr
+*.alg
+*-blx.bib
+_minted-*/
+
+# Course materials (not part of the project)
+docs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
